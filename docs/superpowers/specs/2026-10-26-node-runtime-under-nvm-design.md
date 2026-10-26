@@ -19,12 +19,15 @@ PATH only, so `ccrc install` succeeds, the build succeeds, and `ccrc.service` cr
 1. **The appropriate node** is the one that satisfies `engines.node` in the shipped `server/package.json` (agent's on
    a fleet tree) — the floor stays written once. Under nvm: nvm's `default` alias if it qualifies, else the newest
    installed version that qualifies.
-2. **None qualifies under nvm:** `nvm install --lts`. nvm's `default` alias is never changed.
+2. **None qualifies under nvm, and the PATH node does not either:** `nvm install --lts`. nvm's `default` alias is never changed.
 3. **Chosen once, at install/update time**, never per service start. Doctor re-measures it.
 4. **Only an interactive run installs node** (stdin is a TTY). An unattended run (`update --detach`, the watchdog,
    the console) picks among installed versions and refuses with one clear line when none qualifies.
-5. **nvm only** for selection and installation. Without nvm, the installer shell's `command -v node`, if it
-   qualifies, is the choice — which also fixes fnm, volta, asdf and mise boxes with no code of their own.
+5. **nvm only** for installation, with the PATH node as the fallback. Order: (1) an installed nvm version (decision
+   1); (2) the installer shell's `command -v node`, if it qualifies; (3) only then, interactively, `nvm install
+   --lts` (decisions 2 and 4); (4) refuse, saying what each step found. Step 2 is a controller ruling of 2026-10-26: a
+   box with nvm present that runs a qualifying system node must not lose its unattended updates. Without nvm, steps
+   2 and 4 alone apply, which also fixes fnm, volta, asdf and mise boxes with no code of their own.
 6. **How units reach it:** a ccrc-owned directory `~/.local/libexec/ccrc/node-bin/` holding exactly three
    symlinks, `node`, `npm`, `npx`, to the chosen install; and `~/.config/environment.d/50-ccrc-node.conf` putting
    that directory first on the user manager's PATH, followed by `systemctl --user daemon-reload` (which re-runs the
